@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Our App</h1>
+        <div class="form-group">
+            <a href="{{ url_for('login') }}">
+                <button class="btn">Login</button>
+            </a>
+        </div>
+        <div class="form-group">
+            <a href="{{ url_for('signup') }}">
+                <button class="btn">Sign Up</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

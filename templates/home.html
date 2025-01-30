@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+    
+</head>
+<body>
+    <div id="home-page" class="home-page">
+        <header>
+            <nav class="navbar">
+                <div class="logo">Veg Hunt</div>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#restaurants">Restaurants</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li>
+                        <a href="#" class="logout-link" onclick="document.getElementById('logout-form').submit();">Logout</a>
+                        <form id="logout-form" action="{{ url_for('logout') }}" method="POST" style="display: none;">
+                        </form>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1>Welcome, {{ username }}!</h1>
+                <p>Discover the best vegetarian restaurants near you.</p>
+            </div>
+        </section>
+
+        <section id="restaurants" class="restaurant-section">
+            {% for restaurant in restaurants %}
+            <div class="restaurant-card" style="background-image: url('{{ restaurant.image_url }}');">
+                <div class="restaurant-info">
+                    <h3>{{ restaurant.name }}</h3>
+                    <p class="rating">⭐⭐⭐⭐☆ ({{ restaurant.rating }})</p>
+                    <p class="place">Location: {{ restaurant.address }}</p>
+
+                    {% if restaurant.reviews %}
+                        <div class="reviews">
+                            <h4>Reviews:</h4>
+                            {% for review in restaurant.reviews %}
+                                <div class="review">
+                                    <p><strong>{{ review.author }}:</strong> {{ review.text }}</p>
+                                    <p>Rating: {{ review.rating }} ⭐</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p>No reviews available.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+
+        <footer>
+            <p>&copy; 2025 Veg Hunt. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
