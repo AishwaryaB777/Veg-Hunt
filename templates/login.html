@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login & Sign Up</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
-    
-    <div class="container">
-        
+    <section class="Lo">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -17,24 +16,58 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        <div class="form-container">
-            <h1>Login</h1>
-            <form id="loginForm" method="POST">
-        <form id="loginForm" method="POST">
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+
+        <input type="radio" id="login" name="form" class="form-control" checked>
+        <input type="radio" id="signup" name="form" class="form-control">
+
+        <div class="container login-container">
+            <h1 class="lg">Welcome Back!</h1>
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="input-group">
+                    <input class="bb" type="email" name="email" placeholder="Email" required>
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-group">
+                    <input class="uu" type="password" name="password" placeholder="Password" required>
+                    <i class='bx bxs-lock'></i>
+                </div>
+                <div class="nnn">
+                    <label><input type="checkbox">Remember me</label>
+                    <a href="#">Forgot Password</a>
+                </div>
+                <button class="ll" type="submit">Login</button>
+            </form>
+            <div class="rr">
+                <p>Don't have an account? <label for="signup" style="cursor: pointer; color: #228B22; font-weight: bold;">Register</label></p>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+        </div>
+
+        <div class="container signup-container">
+            <h1 class="lg">Create Account</h1>
+            <form method="POST" action="{{ url_for('signup') }}">
+                <div class="input-group">
+                    <input class="bb" type="text" name="username" placeholder="Username" required>
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-group">
+                    <input class="email-input" type="email" name="email" placeholder="Email" required>
+                    <i class='bx bx-envelope'></i>
+                </div>
+                <div class="input-group">
+                    <input class="uu" type="password" name="password" placeholder="Password" required>
+                    <i class='bx bxs-lock'></i>
+                </div>
+                <div class="input-group">
+                    <input class="uu" type="password" name="confirm_password" placeholder="Confirm Password" required>
+                    <i class='bx bxs-lock'></i>
+                </div>
+                <button class="ll" type="submit">Sign Up</button>
+            </form>
+            <div class="rr">
+                <p>Already have an account? <label for="login" style="cursor: pointer; color: #228B22; font-weight: bold;">Login</label></p>
             </div>
-            <button type="submit" class="btn">Login</button>
-        </form>
-        <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
-    </div>
-</form>
-</div>
+        </div>
+    </section>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

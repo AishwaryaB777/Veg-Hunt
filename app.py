@@ -74,7 +74,7 @@ def login():
         if user and check_password_hash(user[3], password):
             session['user_id'] = user[0]
             session['username'] = user[1]
-            flash('Logged in successfully!', 'success')
+            flash(' ', 'success')
             return redirect(url_for('home'))
         else:
             flash('Invalid email or password!', 'error')
@@ -87,6 +87,19 @@ def home():
     # Fetch vegetarian restaurants near Ernakulam (latitude, longitude)
     restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword="vegetarian")  # Ernakulam
     return render_template('home.html', username=session.get('username'), restaurants=restaurants)
+
+@app.route('/restaurant/<restaurant_name>')
+@login_required
+def restaurant_detail(restaurant_name):
+    # Find the restaurant from the list
+    restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword="vegetarian")
+    restaurant = next((r for r in restaurants if r["name"] == restaurant_name), None)
+
+    if not restaurant:
+        flash("Restaurant not found.", "error")
+        return redirect(url_for('home'))
+
+    return render_template('restaurant.html', restaurant=restaurant)
 
 @app.route('/logout', methods=['POST'])
 @login_required

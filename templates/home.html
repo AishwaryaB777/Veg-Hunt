@@ -3,65 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+    <title>VegHunt - Top Vegetarian Restaurants</title>
+    <link rel="stylesheet"href="home.css">
+   <style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #87e777, #56a856);
+    color: white;
+    text-align: center;
+    overflow-x: hidden;
+    font-size: 18px;
+    line-height: 1.6;
+    background-attachment: fixed;
+}
+
+h1, h3 {
+    font-family: 'Poppins', sans-serif;
+    color: white;
+}
+
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    height: 100px;
+}
+
+.navbar h1 {
+    font-size: 50px;
+    color: white;
+    background: linear-gradient(45deg, #32CD32, #228B22, #006400, #ADFF2F);
+    background-clip: text;
+    -webkit-background-clip: text;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4), 0 0 15px rgba(0, 255, 0, 0.2);
+    letter-spacing: 2px;
+    animation: glowText 1s ease-in-out infinite alternate;
+}
+
+@keyframes glowText {
+    0% {
+        text-shadow: 0 0 8px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4), 0 0 15px rgba(0, 255, 0, 0.2);
+    }
+    50% {
+        text-shadow: 0 0 18px rgba(0, 255, 0, 1), 0 0 25px rgba(0, 255, 0, 0.7), 0 0 35px rgba(0, 255, 0, 0.5);
+    }
+    100% {
+        text-shadow: 0 0 8px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4), 0 0 15px rgba(0, 255, 0, 0.2);
+    }
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+    margin-left: auto;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 12px 25px;
+    border-radius: 30px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-links a:hover {
+    background: #32CD32;
+    color: black;
+    transform: scale(1.1);
+}
+
+
+.search-box {
+display: flex;
+align-items: center;
+background: linear-gradient(120deg, #40afd8, #19d823); 
+padding: 12px;
+border-radius: 30px;
+width: 600px;
+margin: 40px auto;
+transition: width 0.5s ease-in-out;
+animation: slideIn 1s ease-out, changeBackground 5s infinite alternate;
+}
+
+@keyframes changeBackground {
+0% {
+background: linear-gradient(120deg, #40afd8, #19d823); 
+}
+50% {
+background: linear-gradient(120deg, #2147b9, #2ec56b); 
+}
+100% {
+background: linear-gradient(120deg, #40afd8, #19d823); 
+}
+}
+
+.search-box input {
+border: none;
+outline: none;
+padding: 12px;
+font-size: 16px;
+border-radius: 20px;
+flex: 1;
+background: white;
+color: black;
+transition: all 0.3s ease-in-out;  
+z-index: 10;
+}
+
+.search-box button {
+background: #32CD32;
+color: white;
+border: none;
+padding: 12px 20px;
+cursor: pointer;
+border-radius: 50%;
+display: flex;
+justify-content: center;
+align-items: center;
+box-shadow: 10px 5px 15px rgba(50, 205, 50, 0.5);
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+margin-left: 10px;
+}
+
+.search-box button:hover {
+transform: scale(1.1);
+box-shadow: 10px 5px 20px rgba(50, 205, 50, 0.7);
+}
+
+.hero {
+    height: 80vh;
+    background: url('static/assets/food.jpg') center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: background-size 1s ease;
+    background-attachment: fixed;
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+}
+
+.hero h1 {
+    position: relative;
+    font-size: 60px;
+    color: white;
+    text-shadow: 0px 0px 15px rgba(0, 255, 0, 1);
+    animation: fadeIn 2s ease-out;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+
+.restaurant-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    padding: 50px;
+}
+
+.restaurant-card {
+    background: #ffffff;
+    color: #333;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0px 4px 8px rgba(0, 255, 0, 0.2);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    transform: scale(1);
+    background-color: #f9f9f9;
+    cursor: pointer;
+}
+
+.restaurant-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 6px 15px rgba(0, 255, 0, 0.4);
+}
+
+    .restaurant-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-bottom: 2px solid #32CD32;
+    }
     
+
+.restaurant-card:hover img {
+    transform: scale(1.1);
+}
+
+.content {
+    padding: 20px;
+    text-align: left;
+}
+
+.rating span {
+    color: #facc15;
+    font-size: 18px;
+}
+
+.price {
+    font-size: 20px;
+    color: #32CD32;
+}
+
+
+footer {
+    background: #2e2e2e;
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+footer p {
+    font-size: 14px;
+}
+
+footer a {
+    color: #32CD32;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+   </style>
+       
 </head>
 <body>
-    <div id="home-page" class="home-page">
-        <header>
-            <nav class="navbar">
-                <div class="logo">Veg Hunt</div>
-                <ul class="nav-links">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#restaurants">Restaurants</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                    <li>
-                        <a href="#" class="logout-link" onclick="document.getElementById('logout-form').submit();">Logout</a>
-                        <form id="logout-form" action="{{ url_for('logout') }}" method="POST" style="display: none;">
-                        </form>
-                    </li>
-                </ul>
-            </nav>
-        </header>
+    
+    <nav class="navbar">
+        <h1>VegHunt</h1>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">About Us</a>
+                <a href="#" class="logout-link" onclick="document.getElementById('logout-form').submit();">Logout</a>
+                <form id="logout-form" action="{{ url_for('logout') }}" method="POST" style="display: none;"></form>
+        </div>
+    </nav>
 
-        <section id="home" class="hero">
-            <div class="hero-content">
-                <h1>Welcome, {{ username }}!</h1>
-                <p>Discover the best vegetarian restaurants near you.</p>
-            </div>
-        </section>
+   
+    <section class="hero">
+        <h1>Explore the Best Vegetarian Delights</h1>
+        <div class="search-box">
+            <input type="text" placeholder="Find your favorite restaurant...">
+            <button>🔍</button>
+        </div>
+    </section>
 
-        <section id="restaurants" class="restaurant-section">
-            {% for restaurant in restaurants %}
-            <div class="restaurant-card" style="background-image: url('{{ restaurant.image_url }}');">
-                <div class="restaurant-info">
+    <section id="restaurants" class="restaurant-section">
+        <div class="restaurant-list">
+            {% for restaurant in restaurants[:10] %}
+            <a href="{{ url_for('restaurant_detail', restaurant_name=restaurant.name) }}" class="restaurant-card">
+                <img src="{{ restaurant.image_url }}" alt="{{ restaurant.name }}">
+                <div class="content">
                     <h3>{{ restaurant.name }}</h3>
                     <p class="rating">⭐⭐⭐⭐☆ ({{ restaurant.rating }})</p>
                     <p class="place">Location: {{ restaurant.address }}</p>
-
-                    {% if restaurant.reviews %}
-                        <div class="reviews">
-                            <h4>Reviews:</h4>
-                            {% for review in restaurant.reviews %}
-                                <div class="review">
-                                    <p><strong>{{ review.author }}:</strong> {{ review.text }}</p>
-                                    <p>Rating: {{ review.rating }} ⭐</p>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p>No reviews available.</p>
-                    {% endif %}
                 </div>
-            </div>
+            </a>
             {% endfor %}
-        </section>
-
-        <footer>
-            <p>&copy; 2025 Veg Hunt. All rights reserved.</p>
-        </footer>
+        </div>
+    </section>
+    
     </div>
+    <footer>
+        <p>&copy; 2025 VegHunt. All Rights Reserved.</p>
+    </footer>
 </body>
 </html>
