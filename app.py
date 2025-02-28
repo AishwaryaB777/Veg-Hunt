@@ -88,6 +88,17 @@ def home():
     restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword="vegetarian")  # Ernakulam
     return render_template('home.html', username=session.get('username'), restaurants=restaurants)
 
+@app.route('/search', methods=['GET'])
+@login_required
+def search():
+    query = request.args.get('query', '')
+    if not query:
+        flash("Please enter a search term", "error")
+        return redirect(url_for('home'))
+
+    restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword=query)
+    return render_template('home.html', restaurants=restaurants)
+
 @app.route('/restaurant/<restaurant_name>')
 @login_required
 def restaurant_detail(restaurant_name):

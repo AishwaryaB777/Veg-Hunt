@@ -278,11 +278,12 @@ footer a:hover {
    
     <section class="hero">
         <h1>Explore the Best Vegetarian Delights</h1>
-        <div class="search-box">
-            <input type="text" placeholder="Find your favorite restaurant...">
-            <button>🔍</button>
-        </div>
+        <form class="search-box" action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="query" placeholder="Find your favorite restaurant..." required>
+            <button type="submit">🔍</button>
+        </form>
     </section>
+    
 
     <section id="restaurants" class="restaurant-section">
         <div class="restaurant-list">
