@@ -182,6 +182,19 @@ transform: scale(1.1);
 box-shadow: 10px 5px 20px rgba(50, 205, 50, 0.7);
 }
 
+h2 {
+    font-size: 20px; /* Reduce the size */
+    font-weight: 500;
+    margin-top: 120px; /* Push it lower to avoid overlapping with navbar */
+    padding: 20px;
+    max-width: 80%;
+    line-height: 1.5;
+    text-align: justify;
+    height:700px
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    display: inline-block;
+}
 
         .restaurant-list {
             display: grid;
@@ -255,38 +268,16 @@ box-shadow: 10px 5px 20px rgba(50, 205, 50, 0.7);
         <h1>VegHunt</h1>
         <div class="nav-links">
             <a href="{{ url_for('home') }}">Home</a>
-            <a href="{{ url_for('about') }}">About Us</a></li>
+            <a href="{{ url_for('about') }}">About Us</a>
             <a href="#" onclick="document.getElementById('logout-form').submit();">Logout</a>
             <form id="logout-form" action="{{ url_for('logout') }}" method="POST" style="display: none;"></form>
         </div>
     </nav>
+<h2>
+    Welcome to VegHunt, your go-to platform for discovering and reviewing vegetarian restaurants. Our mission is to provide a comprehensive and user-friendly space where food lovers can explore the best vegetarian dining options with authentic reviews and ratings.
 
-    <section class="hero">
-        <h1>Explore the Best Vegetarian Delights</h1>
-        <form action="{{ url_for('search') }}" method="GET" class="search-box">
-            <input type="text" name="query" placeholder="Find your favorite restaurant..." required>
-            <button type="submit">🔍</button>
-        </form>
-    </section>
+    We are a team of four passionate B.Tech students—Agraja, Aiswarya P., Aiswarya Sony, and Aiswarya B. Nair—working on this project as part of our academic journey. VegHunt is our mini project, designed to bridge the gap between vegetarian food enthusiasts and quality restaurants by offering a well-organized and informative directory.
     
-
-    <section id="restaurants">
-        <div class="restaurant-list">
-            {% for restaurant in restaurants[:10] %}
-            <a href="{{ url_for('restaurant_detail', restaurant_name=restaurant.name) }}" class="restaurant-card">
-                <img src="{{ restaurant.image_url }}" alt="{{ restaurant.name }}">
-                <div class="content">
-                    <h3 class="restaurant-name">{{ restaurant.name }}</h3>
-                    <p class="rating">⭐⭐⭐⭐☆ ({{ restaurant.rating }})</p>
-                    <p class="place">Location: {{ restaurant.address }}</p>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2025 VegHunt. All Rights Reserved.</p>
-    </footer>
+    Driven by technology and a shared love for good food, we strive to make VegHunt a trusted platform for discovering the best vegetarian experience</h2>
 </body>
 </html>

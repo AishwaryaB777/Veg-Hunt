@@ -1,15 +1,32 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from functools import wraps
 from restaurant_reviews import get_restaurants  # Import restaurant reviews logic
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///reviews.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your_secret_key_here'  # Change this to a secure secret key
+db = SQLAlchemy(app)
 
 GOOGLE_PLACES_API_KEY = "AIzaSyCfT5lgVhG5shvwQG1cPrtaQvoKE_CUHtY"  # Replace with your actual API key
 
-# Database initialization
+# Define Review Model
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    author = db.Column(db.String(100), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    upvotes = db.Column(db.Integer, default=0)
+    downvotes = db.Column(db.Integer, default=0)
+
+# Initialize DB inside the app context
+with app.app_context():
+    db.create_all()
+
+# Initialize SQLite for users
 def init_db():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -74,7 +91,7 @@ def login():
         if user and check_password_hash(user[3], password):
             session['user_id'] = user[0]
             session['username'] = user[1]
-            flash(' ', 'success')
+            flash('', 'success')
             return redirect(url_for('home'))
         else:
             flash('Invalid email or password!', 'error')
@@ -88,7 +105,29 @@ def home():
     restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword="vegetarian")  # Ernakulam
     return render_template('home.html', username=session.get('username'), restaurants=restaurants)
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+    
 @app.route('/search', methods=['GET'])
+@login_required
+def search():
+    query = request.args.get('query', '').strip()
+    if not query:
+        flash("Please enter a search term", "error")
+        return redirect(url_for('home'))
+
+    print(f"Searching for: {query}")  # Debugging line
+
+    restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword=query)
+    
+    if not restaurants:
+        flash("No restaurants found for your search.", "warning")
+
+    return render_template('home.html', restaurants=restaurants)
+
+
+
 @login_required
 def search():
     query = request.args.get('query', '')
@@ -110,15 +149,109 @@ def restaurant_detail(restaurant_name):
         flash("Restaurant not found.", "error")
         return redirect(url_for('home'))
 
-    return render_template('restaurant.html', restaurant=restaurant)
+    # Fetch reviews for the restaurant
+    reviews = Review.query.order_by(Review.id.desc()).all()
+
+    return render_template('restaurant.html', restaurant=restaurant, reviews=reviews)
 
 @app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     session.clear()
-    flash('You have been logged out.', 'success')
+    flash(' ', 'success')
     return redirect(url_for('login'))  # Redirect to login page after logout
 
+### 📌 **Comment API**
+@app.route('/api/comments', methods=['POST'])
+def add_comment():
+    data = request.get_json()
+    if not data or "content" not in data:
+        return jsonify({"success": False, "error": "Invalid request"}), 400
+
+    new_review = Review(
+        author=session.get('username', 'Anonymous'), 
+        text=data["content"],
+        rating=3,  # Default rating, you can modify as needed
+        upvotes=0,
+        downvotes=0
+    )
+    db.session.add(new_review)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "comment": {
+            "id": new_review.id,
+            "author": new_review.author,
+            "text": new_review.text,
+            "rating": new_review.rating,
+            "upvotes": new_review.upvotes,
+            "downvotes": new_review.downvotes
+        }
+    })
+
+@app.route('/api/comments/<int:comment_id>/vote', methods=['POST'])
+def vote_comment(comment_id):
+    review = Review.query.get(comment_id)
+    if not review:
+        return jsonify({"success": False, "error": "Comment not found"}), 404
+
+    # Get user's vote history from session (per user basis)
+    user_votes = session.get('user_votes', {})
+
+    data = request.get_json()
+    vote_type = data.get("voteType")
+
+    # Check if the user has already voted on this review
+    previous_vote = user_votes.get(str(comment_id))
+
+    if previous_vote == vote_type:
+        # If clicking the same vote again, remove it
+        if vote_type == "upvote":
+            review.upvotes -= 1
+        elif vote_type == "downvote":
+            review.downvotes -= 1
+        user_votes.pop(str(comment_id))  # Remove vote from session
+    else:
+        # If switching votes, adjust the counts
+        if previous_vote == "upvote":
+            review.upvotes -= 1
+        elif previous_vote == "downvote":
+            review.downvotes -= 1
+
+        # Apply new vote
+        if vote_type == "upvote":
+            review.upvotes += 1
+        elif vote_type == "downvote":
+            review.downvotes += 1
+        
+        user_votes[str(comment_id)] = vote_type  # Save new vote in session
+
+    # Save changes
+    session['user_votes'] = user_votes
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "upvotes": review.upvotes,
+        "downvotes": review.downvotes
+    })
+
+@app.route('/api/comments', methods=['GET'])
+def get_comments():
+    reviews = Review.query.order_by(Review.id.desc()).all()
+    return jsonify([
+        {
+            "id": review.id,
+            "author": review.author,
+            "text": review.text,
+            "rating": review.rating,
+            "upvotes": review.upvotes,
+            "downvotes": review.downvotes
+        } for review in reviews
+    ])
+
 if __name__ == '__main__':
-    init_db()
+    with app.app_context():
+        init_db()  # Initialize user database
     app.run(debug=True)

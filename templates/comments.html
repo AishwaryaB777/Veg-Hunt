@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment System</title>
+    <style>
+        /* CSS Section */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .comment-form {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .comments-container {
+            margin-top: 20px;
+        }
+
+        .comment {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+        }
+
+        .comment-content {
+            margin-bottom: 10px;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .vote-button {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .vote-button:hover {
+            background-color: #e9ecef;
+        }
+
+        .vote-button.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Comments</h1>
+        
+        <div class="comment-form">
+            <textarea id="commentInput" placeholder="Write your comment here..."></textarea>
+            <button onclick="addComment()">Post Comment</button>
+        </div>
+
+        <div id="comments" class="comments-container">
+            <!-- Comments will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        async function loadComments() {
+            try {
+                const response = await fetch('/api/comments');
+                const comments = await response.json();
+                const commentsContainer = document.getElementById('comments');
+                commentsContainer.innerHTML = '';
+    
+                comments.forEach(comment => {
+                    const commentElement = createCommentElement(comment);
+                    commentsContainer.appendChild(commentElement);
+                });
+            } catch (error) {
+                console.error('Error loading comments:', error);
+            }
+        }
+    
+        async function voteComment(commentId, voteType) {
+            try {
+                const response = await fetch(`/api/comments/${commentId}/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ voteType })
+                });
+    
+                if (response.ok) {
+                    await loadComments();
+                }
+            } catch (error) {
+                console.error('Error voting:', error);
+            }
+        }
+    
+        function createCommentElement(comment) {
+            const userVotes = JSON.parse(localStorage.getItem('userVotes')) || {};
+            const userVote = userVotes[comment.id] || null;
+    
+            const div = document.createElement('div');
+            div.className = 'comment';
+            div.setAttribute('data-id', comment.id);
+            div.innerHTML = `
+                <div class="comment-content">${comment.content}</div>
+                <div class="vote-buttons">
+                    <button class="vote-button upvote ${userVote === 'upvote' ? 'active' : ''}" 
+                        onclick="toggleVote(${comment.id}, 'upvote')">
+                        👍 <span>${comment.upvotes}</span>
+                    </button>
+                    <button class="vote-button downvote ${userVote === 'downvote' ? 'active' : ''}" 
+                        onclick="toggleVote(${comment.id}, 'downvote')">
+                        👎 <span>${comment.downvotes}</span>
+                    </button>
+                </div>
+                <div class="timestamp">${comment.created_at}</div>
+            `;
+            return div;
+        }
+    
+        async function addComment() {
+            const commentInput = document.getElementById('commentInput');
+            const content = commentInput.value.trim();
+    
+            if (!content) {
+                alert('Please write a comment first!');
+                return;
+            }
+    
+            try {
+                const response = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content })
+                });
+    
+                if (response.ok) {
+                    commentInput.value = '';
+                    await loadComments();
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+            }
+        }
+    
+        async function toggleVote(commentId, voteType) {
+            const userVotes = JSON.parse(localStorage.getItem('userVotes')) || {};
+            const currentVote = userVotes[commentId];
+    
+            let newVoteType = voteType;
+    
+            if (currentVote === voteType) {
+                newVoteType = "remove"; 
+                delete userVotes[commentId]; 
+            } else {
+                userVotes[commentId] = voteType; 
+            }
+    
+            try {
+                const response = await fetch(`/api/comments/${commentId}/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ voteType: newVoteType }) 
+                });
+    
+                if (response.ok) {
+                    localStorage.setItem('userVotes', JSON.stringify(userVotes));
+    
+                    const data = await response.json();
+                    updateCommentUI(commentId, data.upvotes, data.downvotes, newVoteType);
+                }
+            } catch (error) {
+                console.error('Error voting:', error);
+            }
+        }
+    
+        function updateCommentUI(commentId, upvotes, downvotes, newVoteType) {
+            const commentElement = document.querySelector(`.comment[data-id="${commentId}"]`);
+            if (!commentElement) return;
+    
+            commentElement.querySelector('.vote-button.upvote span').textContent = upvotes;
+            commentElement.querySelector('.vote-button.downvote span').textContent = downvotes;
+    
+            const upvoteButton = commentElement.querySelector('.vote-button.upvote');
+            const downvoteButton = commentElement.querySelector('.vote-button.downvote');
+    
+            upvoteButton.classList.remove('active');
+            downvoteButton.classList.remove('active');
+    
+            if (newVoteType === "upvote") {
+                upvoteButton.classList.add('active');
+            } else if (newVoteType === "downvote") {
+                downvoteButton.classList.add('active');
+            }
+        }
+    
+        document.addEventListener('DOMContentLoaded', loadComments);
+    </script>
+    
+</body>
+</html>
