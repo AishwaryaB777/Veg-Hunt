@@ -4,18 +4,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from functools import wraps
 from restaurant_reviews import get_restaurants  # Import restaurant reviews logic
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///reviews.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Updated DB URI to point to the 'instance' folder
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'reviews.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your_secret_key_here'  # Change this to a secure secret key
 db = SQLAlchemy(app)
 
 GOOGLE_PLACES_API_KEY = "AIzaSyCfT5lgVhG5shvwQG1cPrtaQvoKE_CUHtY"  # Replace with your actual API key
 
-# Define Review Model
+# Updated Review Model with restaurant_name field
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    restaurant_name = db.Column(db.String(200), nullable=False)  # New field to associate review with a restaurant
     author = db.Column(db.String(100), nullable=False)
     text = db.Column(db.Text, nullable=False)
     rating = db.Column(db.Integer, nullable=False)
@@ -28,7 +33,8 @@ with app.app_context():
 
 # Initialize SQLite for users
 def init_db():
-    conn = sqlite3.connect('users.db')
+    users_db_path = os.path.join(basedir, 'instance', 'users.db')
+    conn = sqlite3.connect(users_db_path)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,13 +65,13 @@ def signup():
         email = request.form['email']
         password = request.form['password']
         
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(os.path.join(basedir, 'instance', 'users.db'))
         c = conn.cursor()
         
         try:
             hashed_password = generate_password_hash(password)
             c.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                     (username, email, hashed_password))
+                      (username, email, hashed_password))
             conn.commit()
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
@@ -82,7 +88,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
         
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(os.path.join(basedir, 'instance', 'users.db'))
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE email = ?", (email,))
         user = c.fetchone()
@@ -102,7 +108,7 @@ def login():
 @login_required
 def home():
     # Fetch vegetarian restaurants near Ernakulam (latitude, longitude)
-    restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword="vegetarian")  # Ernakulam
+    restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword="vegetarian")
     return render_template('home.html', username=session.get('username'), restaurants=restaurants)
 
 @app.route('/about')
@@ -126,18 +132,6 @@ def search():
 
     return render_template('home.html', restaurants=restaurants)
 
-
-
-@login_required
-def search():
-    query = request.args.get('query', '')
-    if not query:
-        flash("Please enter a search term", "error")
-        return redirect(url_for('home'))
-
-    restaurants = get_restaurants(location="9.9816,76.2999", radius=5000, keyword=query)
-    return render_template('home.html', restaurants=restaurants)
-
 @app.route('/restaurant/<restaurant_name>')
 @login_required
 def restaurant_detail(restaurant_name):
@@ -149,8 +143,8 @@ def restaurant_detail(restaurant_name):
         flash("Restaurant not found.", "error")
         return redirect(url_for('home'))
 
-    # Fetch reviews for the restaurant
-    reviews = Review.query.order_by(Review.id.desc()).all()
+    # Fetch reviews only for the specified restaurant
+    reviews = Review.query.filter_by(restaurant_name=restaurant_name).order_by(Review.id.desc()).all()
 
     return render_template('restaurant.html', restaurant=restaurant, reviews=reviews)
 
@@ -159,19 +153,24 @@ def restaurant_detail(restaurant_name):
 def logout():
     session.clear()
     flash(' ', 'success')
-    return redirect(url_for('login'))  # Redirect to login page after logout
+    return redirect(url_for('login'))
 
 ### 📌 **Comment API**
 @app.route('/api/comments', methods=['POST'])
 def add_comment():
     data = request.get_json()
-    if not data or "content" not in data:
+    # Check for required keys: content and restaurant
+    if not data or "content" not in data or "restaurant" not in data:
         return jsonify({"success": False, "error": "Invalid request"}), 400
 
+    # Use the rating provided in the request (default to 3 if not provided)
+    rating = data.get("rating", 3)
+
     new_review = Review(
-        author=session.get('username', 'Anonymous'), 
+        restaurant_name=data["restaurant"],  # Associate the review with a restaurant
+        author=session.get('username', 'Anonymous'),
         text=data["content"],
-        rating=3,  # Default rating, you can modify as needed
+        rating=rating,  # Use the user-selected rating
         upvotes=0,
         downvotes=0
     )
@@ -182,6 +181,7 @@ def add_comment():
         "success": True,
         "comment": {
             "id": new_review.id,
+            "restaurant": new_review.restaurant_name,
             "author": new_review.author,
             "text": new_review.text,
             "rating": new_review.rating,
@@ -189,6 +189,7 @@ def add_comment():
             "downvotes": new_review.downvotes
         }
     })
+
 
 @app.route('/api/comments/<int:comment_id>/vote', methods=['POST'])
 def vote_comment(comment_id):
@@ -243,6 +244,7 @@ def get_comments():
     return jsonify([
         {
             "id": review.id,
+            "restaurant": review.restaurant_name,
             "author": review.author,
             "text": review.text,
             "rating": review.rating,
